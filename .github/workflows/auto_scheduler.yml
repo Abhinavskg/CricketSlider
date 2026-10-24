@@ -2,8 +2,8 @@ name: Cricketslider Auto Scheduler
 
 on:
   schedule:
-    - cron: "30 2 * * *"    # 08:00 IST  (02:30 UTC) -> Morning story + carousel
-    - cron: "30 14 * * *"   # 20:00 IST  (14:30 UTC) -> Evening story + carousel
+    - cron: "30 2 * * *"    # 08:00 AM IST (02:30 UTC) -> Morning story + carousel
+    - cron: "45 14 * * *"   # 08:15 PM IST (14:45 UTC) -> Evening story + carousel
   workflow_dispatch:
     inputs:
       session:
