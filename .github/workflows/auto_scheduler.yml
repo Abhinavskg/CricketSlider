@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
       CONTACT: ${{ vars.CONTACT }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: AI-rewritten headlines/summaries
       FACTS_AI: ${{ vars.FACTS_AI }}                        # optional: 'true' = AI may add extra facts

@@ -40,6 +40,35 @@ DRY_RUN=true MEDIA_BASE_URL=https://example.com python -m src.publish
 - **Look**: colours at the top of `generate_images.py`; drop `Bold.ttf`/`Regular.ttf` in `fonts/`.
 - **Housekeeping**: the `media` branch grows over time – delete old `run_*` folders occasionally.
 
+## What's new in v2
+- **Coverage:** ~8 direct RSS feeds + Google News searches for 20 topics (IPL, WPL, Ranji, Vijay Hazare, SMAT,
+  Duleep, BBL, PSL, SA20, The Hundred, CPL, ILT20, MLC, LPL, County, ICC, Team India, women's cricket, records).
+  Each card shows its league tag. ~60% of every carousel is India-focused when India news exists.
+- **No repeats:** `data/state.json` stores posted ids, headlines and photo files. A story is skipped if its id was posted,
+  its headline is >=50% similar to a recent one, or it is another report of the same match result (within 2 days).
+- **Different photos every time:** random pick among all valid Commons hits (never the top result), shuffled query pools
+  (Indian stadiums, players, leagues), a file is never reused, a separate photo for the cover, random crop + colour
+  grade, and alternating split / full-bleed layouts with accent colours per category.
+- **Attractive titles:** a hook line ("WHAT A FINISH!", "TON UP!", "SQUAD ALERT"...) above every headline.
+  Optional: add secret `ANTHROPIC_API_KEY` and headlines/summaries are rewritten in fresh words by Claude
+  (never adding facts). Without it, rule-based hooks are used.
+
+## v3: three sessions a day (IST)
+| Time | Session | Story | Carousel |
+|---|---|---|---|
+| 08:00 | morning | On This Day (else top India story) | Top headlines, records, squads - random cover title + live "Top story" teaser |
+| 14:00 | afternoon | 1 fact of the day | **5-6 amazing cricket facts** (India-heavy, women's cricket included) |
+| 20:00 | night | Top match result | Results, records, day wrap |
+
+- **Facts** come from a hand-verified bank in `src/facts.py` (56 facts, none repeated). When it runs low the bot
+  recycles the oldest ones - add your own verified entries, or set repo variable `FACTS_AI=true` (+ `ANTHROPIC_API_KEY`)
+  to let Claude draft more. AI-drafted facts should be spot-checked before you rely on them.
+- **Image matching:** every Wikimedia candidate is checked against its title, description and categories.
+  Women's stories only accept women's-cricket photos; men's stories reject them; a player story needs that
+  player's name in the file info; non-cricket photos are rejected. If nothing relevant exists, a designed
+  navy card is used instead of a wrong photo.
+- Cron times are UTC: `30 2`, `30 8`, `30 14`. Manual runs accept `auto | morning | afternoon | night`.
+
 ## Notes
 - Instagram needs JPEG images; the Graph API publishing limit is ~100 posts per 24 h – you use 4.
 - Photo credits (author + licence) are appended to the caption for CC-BY/CC-BY-SA compliance.

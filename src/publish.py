@@ -7,7 +7,8 @@ Env: IG_USER_ID, IG_ACCESS_TOKEN, MEDIA_BASE_URL, DRY_RUN=true|false
 """
 import json, os, sys, time
 import requests
-from src.config import OUTPUT, STATE_FILE
+from src import state
+from src.config import OUTPUT
 
 GRAPH = "https://graph.facebook.com/v21.0"
 IG_ID, TOKEN = os.getenv("IG_USER_ID"), os.getenv("IG_ACCESS_TOKEN")
@@ -68,15 +69,6 @@ def post_carousel(urls, caption):
     return publish_container(parent)                                  # 3) publish
 
 
-def mark_posted(ids):
-    try:
-        state = json.loads(STATE_FILE.read_text())
-    except Exception:
-        state = {"posted": []}
-    state["posted"] = (state["posted"] + list(ids))[-500:]
-    STATE_FILE.write_text(json.dumps(state, indent=2))
-
-
 def main():
     m = json.loads((OUTPUT / "manifest.json").read_text())
     story_url = f"{BASE}/{m['story']['file']}"
@@ -92,11 +84,12 @@ def main():
         sys.exit("Missing IG_USER_ID / IG_ACCESS_TOKEN / MEDIA_BASE_URL")
 
     errors = []
-    for name, fn, ids in (("story", lambda: post_story(story_url), m["story"]["ids"]),
-                          ("carousel", lambda: post_carousel(slide_urls, caption), m["carousel"]["ids"])):
+    for name, fn in (("story", lambda: post_story(story_url)),
+                     ("carousel", lambda: post_carousel(slide_urls, caption))):
         try:
             print(f"[{name}] published, media id {fn()}")
-            mark_posted(ids)
+            part = m[name]                               # remember ids, headlines and photos -> no repeats
+            state.remember(part["ids"], part["titles"], part["images"])
         except Exception as e:                        # one failure must not block the other
             print(f"[{name}] FAILED: {e}"); errors.append(name)
     if errors:
