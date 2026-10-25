@@ -2,14 +2,15 @@ name: Cricketslider Auto Scheduler
 
 on:
   schedule:
-    - cron: "30 2 * * *"    # 08:00 AM IST (02:30 UTC) -> Morning story + carousel
-    - cron: "45 14 * * *"   # 08:15 PM IST (14:45 UTC) -> Evening story + carousel
+    - cron: "30 2 * * *"    # 08:00 IST  (02:30 UTC) -> MORNING: top headlines + On This Day
+    - cron: "30 8 * * *"    # 14:00 IST  (08:30 UTC) -> AFTERNOON: 5-6 amazing cricket facts
+    - cron: "30 14 * * *"   # 20:00 IST  (14:30 UTC) -> NIGHT: results, records, day wrap
   workflow_dispatch:
     inputs:
       session:
         description: "Session to run"
         type: choice
-        options: [auto, morning, evening]
+        options: [auto, morning, afternoon, night]
         default: auto
       dry_run:
         description: "Render images only, do not publish"
@@ -30,6 +31,8 @@ jobs:
     env:
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
       CONTACT: ${{ vars.CONTACT }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: AI-rewritten headlines/summaries
+      FACTS_AI: ${{ vars.FACTS_AI }}                        # optional: 'true' = AI may add extra facts
       IG_USER_ID: ${{ secrets.IG_USER_ID }}
       IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
       TZ: Asia/Kolkata
@@ -50,7 +53,8 @@ jobs:
         run: |
           S="${{ inputs.session }}"
           if [ -z "$S" ] || [ "$S" = "auto" ]; then
-            if [ "$(date +%H)" -lt 14 ]; then S=morning; else S=evening; fi
+            H=$(date +%H)   # IST (TZ set above); delayed cron runs still land in the right window
+            if [ "$H" -lt 12 ]; then S=morning; elif [ "$H" -lt 17 ]; then S=afternoon; else S=night; fi
           fi
           echo "SESSION=$S" >> "$GITHUB_ENV"
 
